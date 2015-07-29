@@ -1,0 +1,79 @@
+#+Title: ATS
+#+Author: Aditya Siram
+#+EPRESENT_FRAME_LEVEL: 1
+
+* Swap
+- A standard swap function
+#+BEGIN_SRC
+#include <stdio.h>
+
+void swap(int *i, int *j) {
+  int t = *i;
+  *i = *j;
+  *j = t;
+}
+
+void main() {
+   int a = 23, b = 47;
+   swap(&a, &b);
+}
+#+END_SRC
+
+* Swap
+- Include C code directly
+#+BEGIN_EXAMPLE
+%{^
+#include <stdio.h>
+void swap(int *i, int *j) {
+  int t = *i;
+  *i = *j;
+  *j = t;
+}
+
+void swap_runner() {
+  int a = 1, b = 2;
+  swap(&a, &b);
+  printf("After a: %d, b: %d\n", a, b);
+}
+%}
+
+extern fun swap_runner():void = "ext#swap_runner"
+
+implement main0 () = swap_runner()
+#+END_EXAMPLE
+
+- Results
+#+BEGIN_EXAMPLE
+After a: 2, b: 1
+#+END_EXAMPLE
+
+* Swap
+- Running `swap` from ATS
+#+BEGIN_EXAMPLE
+  staload UN = "prelude/SATS/unsafe.sats"
+
+  %{^
+  void swap(int *i, int *j) {..}
+  %}
+
+  extern fun malloc (s: size_t): ptr = "mac#malloc"
+  extern fun free (p: ptr):void = "mac#free"
+  extern fun swap(p1: ptr, p2: ptr): void = "mac#swap"
+
+  implement main0 () = let
+    val i = malloc(sizeof<int>)
+    val j = malloc(sizeof<int>)
+  in
+    $UN.ptr0_set<int>(i, 1); $UN.ptr0_set<int>(j, 2);
+    swap(i,j);
+    print($UN.ptr0_get<int> (i)); print("\n");
+    print($UN.ptr0_get<int> (j)); print("\n");
+    free(i); free(j);
+  end
+#+END_EXAMPLE
+
+- Results
+#+BEGIN_EXAMPLE
+2
+1
+#+END_EXAMPLE
