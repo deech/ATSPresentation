@@ -39,5 +39,7 @@ RMF=rm -f
 clean:: ; $(RMF) *~
 clean:: ; $(RMF) *_?ats.o
 clean:: ; $(RMF) *_?ats.c
+clean:: ; $(RMF) swap_runner
+clean:: ; $(RMF) swap_from_ats
 
 cleanall:: clean
