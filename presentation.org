@@ -2,6 +2,22 @@
 #+Author: Aditya Siram
 #+EPRESENT_FRAME_LEVEL: 1
 
+* Hello World
+- Minimal
+#+BEGIN_EXAMPLE
+val greet = lam () => "hello world\n"
+implement main0 () = print(greet())
+#+END_EXAMPLE
+
+* Performance
+- Performs as well as C/C++
+[[file:ats-screenshot.png]]
+- Run anywhere C runs ...
+- No boxing == zero overhead when setting/getting
+- Unfreed memory == type error
+- Unauthorized reads == type error
+- Unauthorized writes == type error
+- Type error!
 * Swap
 - A standard swap function
 #+BEGIN_SRC
@@ -49,6 +65,7 @@ After a: 2, b: 1
 
 * Swap
 - Running `swap` from ATS
+
 #+BEGIN_EXAMPLE
   staload UN = "prelude/SATS/unsafe.sats"
 
@@ -61,14 +78,15 @@ After a: 2, b: 1
   extern fun swap(p1: ptr, p2: ptr): void = "mac#swap"
 
   implement main0 () = let
-    val i = malloc(sizeof<int>)
+    val i = malloc(sizeof<double>) // double?!
     val j = malloc(sizeof<int>)
   in
     $UN.ptr0_set<int>(i, 1); $UN.ptr0_set<int>(j, 2);
     swap(i,j);
     print($UN.ptr0_get<int> (i)); print("\n");
     print($UN.ptr0_get<int> (j)); print("\n");
-    free(i); free(j);
+    free(i);
+                                   // free(j)?!
   end
 #+END_EXAMPLE
 
@@ -76,4 +94,39 @@ After a: 2, b: 1
 #+BEGIN_EXAMPLE
 2
 1
+#+END_EXAMPLE
+
+- Can mimic C, including bugs!
+* Safe pointer
+
+#+BEGIN_EXAMPLE
+extern fun malloc{a:t@ype}(s:sizeof_t a):
+                 [l:addr | l > null](a? @ l | ptr l) = "mac#malloc"
+extern fun free{a:t@ype}{l : addr| l > null}(pf: a @ l | p: ptr l):
+                 void = "mac#free"
+implement main0 () = let
+  val (pf | a) = malloc (sizeof<int>)
+  val _ = ptr_set(pf | a, 10)
+  val x = ptr_get(pf | a)
+  val y = x + 1
+in
+  free(pf | a);
+end
+#+END_EXAMPLE
+
+* Safe pointer
+
+#+BEGIN_EXAMPLE
+           malloc{a:t@ype}(s:sizeof_t a):
+                 [l:addr | l > null](a? @ l |      ) = "          "
+           free{a:t@ype}{l : addr| l > null}(pf: a @ l | p: ptr l):
+                 void = "        "
+          main0    = let
+      (pf |  ) = malloc (sizeof<int>)
+        = ptr_set(pf |      )
+        = ptr_get(pf |  )
+        =
+in
+  free(pf |  );
+end
 #+END_EXAMPLE

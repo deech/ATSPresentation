@@ -14,11 +14,14 @@ PATSCCFLAGS=-O2 -flto
 
 cleanall::
 
-
+minimal: minimal.dats ; \
+  $(PATSCC) -DATS_MEMALLOC_GCBDW $(PATSCCFLAGS) -o $@ $< -lgc || echo $@ ": ERROR!!!"
 swap_runner: swap_runner.dats ; \
-  $(PATSCC) -DATS_MEMALLOC_GCBDW $(PATSCCFLAGS) -o $@ $< -lgc || echo $@ ": ERROR!!!"
+  $(PATSCC) -DATS_MEMALLOC_GCBDW $(PATSCCFLAGS) -o $@ $< || echo $@ ": ERROR!!!"
 swap_from_ats: swap_from_ats.dats ; \
-  $(PATSCC) -DATS_MEMALLOC_GCBDW $(PATSCCFLAGS) -o $@ $< -lgc || echo $@ ": ERROR!!!"
+  $(PATSCC) -DATS_MEMALLOC_GCBDW $(PATSCCFLAGS) -o $@ $< || echo $@ ": ERROR!!!"
+safe_malloc: safe_malloc.dats ; \
+  $(PATSCC) -DATS_MEMALLOC_GCBDW $(PATSCCFLAGS) -o $@ $< || echo $@ ": ERROR!!!"
 cleanall:: ; $(RMF) minimal
 
 ######
@@ -39,7 +42,9 @@ RMF=rm -f
 clean:: ; $(RMF) *~
 clean:: ; $(RMF) *_?ats.o
 clean:: ; $(RMF) *_?ats.c
+clean:: ; $(RMF) safe_malloc
 clean:: ; $(RMF) swap_runner
 clean:: ; $(RMF) swap_from_ats
+clean:: ; $(RMF) minimal
 
 cleanall:: clean

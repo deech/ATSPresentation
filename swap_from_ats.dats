@@ -15,7 +15,7 @@ extern fun free (p: ptr):void = "mac#free"
 extern fun swap(p1: ptr, p2: ptr): void = "mac#swap"
 
 implement main0 () = let
-  val i = malloc(sizeof<int>)
+  val i = malloc(sizeof<double>)
   val j = malloc(sizeof<int>)
 in
   $UN.ptr0_set<int>(i, 1);
@@ -26,5 +26,5 @@ in
   print($UN.ptr0_get<int> (j));
   print("\n");
   free(i);
-  free(j);
+  // free(j);
 end
