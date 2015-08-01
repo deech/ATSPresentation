@@ -4,7 +4,7 @@
 
 extern fun malloc{a:t@ype}(s:sizeof_t a):
                  [l:addr | l > null](a? @ l | ptr l) = "mac#malloc"
-extern fun free{a:t@ype}{l : addr| l > null}(pf: a @ l | p: ptr l):
+extern fun free{a:t@ype}{l : addr| l > null}(a @ l | ptr l):
                  void = "mac#free"
 implement main0 () = let
   val (pf | a) = malloc (sizeof<int>)

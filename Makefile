@@ -22,6 +22,8 @@ swap_from_ats: swap_from_ats.dats ; \
   $(PATSCC) -DATS_MEMALLOC_GCBDW $(PATSCCFLAGS) -o $@ $< || echo $@ ": ERROR!!!"
 safe_malloc: safe_malloc.dats ; \
   $(PATSCC) -DATS_MEMALLOC_GCBDW $(PATSCCFLAGS) -o $@ $< || echo $@ ": ERROR!!!"
+proof_functions: proof_functions.dats ; \
+  $(PATSCC) -DATS_MEMALLOC_GCBDW $(PATSCCFLAGS) -o $@ $< || echo $@ ": ERROR!!!"
 cleanall:: ; $(RMF) minimal
 
 ######
@@ -45,6 +47,7 @@ clean:: ; $(RMF) *_?ats.c
 clean:: ; $(RMF) safe_malloc
 clean:: ; $(RMF) swap_runner
 clean:: ; $(RMF) swap_from_ats
+clean:: ; $(RMF) proof_functions
 clean:: ; $(RMF) minimal
 
 cleanall:: clean

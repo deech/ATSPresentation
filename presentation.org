@@ -64,8 +64,6 @@ After a: 2, b: 1
 #+END_EXAMPLE
 
 * Swap
-- Running `swap` from ATS
-
 #+BEGIN_EXAMPLE
   staload UN = "prelude/SATS/unsafe.sats"
 
@@ -89,7 +87,31 @@ After a: 2, b: 1
                                    // free(j)?!
   end
 #+END_EXAMPLE
+- Running `swap` from ATS
+* Swap
+#+BEGIN_EXAMPLE
+  staload UN = "prelude/SATS/unsafe.sats"
 
+  %{^
+  void swap(int *i, int *j) {..}
+  %}
+
+  extern fun malloc (s: size_t): ptr = "mac#malloc"
+  extern fun free (p: ptr):void = "mac#free"
+  extern fun swap(p1: ptr, p2: ptr): void = "mac#swap"
+
+  implement main0 () = let
+    val i = malloc(sizeof<double>) // double?!
+    val j = malloc(sizeof<int>)
+  in
+    $UN.ptr0_set<int>(i, 1); $UN.ptr0_set<int>(j, 2);
+    swap(i,j);
+    print($UN.ptr0_get<int> (i)); print("\n");
+    print($UN.ptr0_get<int> (j)); print("\n");
+    free(i);
+                                   // free(j)?!
+  end
+#+END_EXAMPLE
 - Results
 #+BEGIN_EXAMPLE
 2
@@ -97,12 +119,61 @@ After a: 2, b: 1
 #+END_EXAMPLE
 
 - Can mimic C, including bugs!
+
+* A safer malloc/free
+#+BEGIN_EXAMPLE
+  extern fun malloc    extern fun malloc
+                         {a:t@ype}
+    (s: size_t)     =>   (s:sizeof_t a)
+      :ptr =               :[l:addr | l > null]
+                            (a? @ l | ptr l) =
+    "mac#malloc"         "mac#malloc"
+#+END_EXAMPLE
+
+#+BEGIN_EXAMPLE
+  extern fun free    extern fun free
+                       {a:t@ype}
+                  =>   {l : addr| l > null}
+    (p: ptr)           (a @ l | ptr l)
+      :void =            :void =
+    "mac#free"         "mac#free"
+#+END_EXAMPLE
+
+* Setting/getting a pointer
+#+BEGIN_EXAMPLE
+
+#+END_EXAMPLE
+* Proof Functions
+#+BEGIN_EXAMPLE
+%{^
+  void my_ptr_set(int *i, int j) {
+    *i = j;
+  }
+%}
+
+extern fun my_ptr_set
+ {a:t@ype}
+ {l:addr | l > null}
+ (pf: a? @ l | p: ptr l, x: a)
+   :(a @ l | void) = "mac#my_ptr_set"
+
+implement main0 () = let
+  val (pf | i) = malloc(sizeof<int>)
+  val (pf1 | _) = my_ptr_set(pf | i, 10)
+  val j = ptr_get(pf1 | i)
+in
+  print_int(j);
+  // free (pf | i) fails to compile
+  free(pf1 | i);
+end
+#+END_EXAMPLE
+
 * Safe pointer
 
 #+BEGIN_EXAMPLE
 extern fun malloc{a:t@ype}(s:sizeof_t a):
                  [l:addr | l > null](a? @ l | ptr l) = "mac#malloc"
-extern fun free{a:t@ype}{l : addr| l > null}(pf: a @ l | p: ptr l):
+extern fun free{a:t@ype}{l : addr| l > null}(a @ l | ptr l):
                  void = "mac#free"
 implement main0 () = let
   val (pf | a) = malloc (sizeof<int>)
@@ -119,7 +190,7 @@ end
 #+BEGIN_EXAMPLE
            malloc{a:t@ype}(s:sizeof_t a):
                  [l:addr | l > null](a? @ l |      ) = "          "
-           free{a:t@ype}{l : addr| l > null}(pf: a @ l | p: ptr l):
+           free{a:t@ype}{l : addr| l > null}(a @ l |      ):
                  void = "        "
           main0    = let
       (pf |  ) = malloc (sizeof<int>)
