@@ -1,7 +1,7 @@
-#include "share/atspre_define.hats"
-#include "share/atspre_staload.hats"
+/**
+   gcc swap.c -o swap
+ */
 
-%{^
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,13 +14,8 @@ void swap(void *i, void *j, size_t size) {
   free(tmp);
 }
 
-void swap_runner() {
+void main() {
   int a = 1, b = 2;
   swap(&a, &b, sizeof(int));
   printf("After . a: %d, b: %d\n", a, b);
 }
-%}
-
-extern fun swap_runner():void = "ext#swap_runner"
-
-implement main0 () = swap_runner()

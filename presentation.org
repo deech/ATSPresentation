@@ -18,44 +18,114 @@ implement main0 () = print(greet())
 - Unauthorized reads == type error
 - Unauthorized writes == type error
 - Type error!
+
 * Swap
 - A standard swap function
 #+BEGIN_SRC
-#include <stdio.h>
-
-void swap(int *i, int *j) {
-  int t = *i;
-  *i = *j;
-  *j = t;
+void swap(void *i, void *j, size_t size) {
+  void* tmp = malloc(size);
+  memcpy(tmp, j, size); memcpy(j, i, size); memcpy(i, tmp, size);
+  free(tmp);
 }
 
 void main() {
-   int a = 23, b = 47;
-   swap(&a, &b);
+  int a = 1, b = 2;
+  swap(&a, &b, sizeof(int));
+  printf("After . a: %d, b: %d\n", a, b);
 }
 #+END_SRC
 
-* Swap
-- Include C code directly
+* Swap From ATS
 #+BEGIN_EXAMPLE
-%{^
-#include <stdio.h>
-void swap(int *i, int *j) {
-  int t = *i;
-  *i = *j;
-  *j = t;
-}
+  %{^
+    void swap(void *i, void *j, size_t size) {
+      void* tmp = malloc(size);
+      memcpy(tmp, j, size); memcpy(j, i, size); memcpy(i, tmp, size);
+      free(tmp);
+    }
+    ...
+  %}
+  ...
+#+END_EXAMPLE
 
-void swap_runner() {
-  int a = 1, b = 2;
-  swap(&a, &b);
-  printf("After a: %d, b: %d\n", a, b);
-}
-%}
+* Swap From ATS
+#+BEGIN_EXAMPLE
+  %{^
+    void swap(void *i, void *j, size_t size) {
+      void* tmp = malloc(size);
+      memcpy(tmp, j, size); memcpy(j, i, size); memcpy(i, tmp, size);
+      free(tmp);
+    }
 
-extern fun swap_runner():void = "ext#swap_runner"
+    void swap_runner() {
+      int a = 1, b = 2;
+      swap(&a, &b, sizeof(int));
+      printf("After . a: %d, b: %d\n", a, b);
+    }
+  %}
+  ...
+#+END_EXAMPLE
 
-implement main0 () = swap_runner()
+* Swap From ATS
+#+BEGIN_EXAMPLE
+  %{^
+    void swap(void *i, void *j, size_t size) {
+      void* tmp = malloc(size);
+      memcpy(tmp, j, size); memcpy(j, i, size); memcpy(i, tmp, size);
+      free(tmp);
+    }
+
+    void swap_runner() {
+      int a = 1, b = 2;
+      swap(&a, &b, sizeof(int));
+      printf("After . a: %d, b: %d\n", a, b);
+    }
+  %}
+
+  extern fun swap_runner():void = "ext#swap_runner"
+  ...
+#+END_EXAMPLE
+
+* Swap From ATS
+#+BEGIN_EXAMPLE
+  %{^
+    void swap(void *i, void *j, size_t size) {
+      void* tmp = malloc(size);
+      memcpy(tmp, j, size); memcpy(j, i, size); memcpy(i, tmp, size);
+      free(tmp);
+    }
+
+    void swap_runner() {
+      int a = 1, b = 2;
+      swap(&a, &b, sizeof(int));
+      printf("After . a: %d, b: %d\n", a, b);
+    }
+  %}
+
+  extern fun swap_runner():void = "ext#swap_runner"
+
+  implement main0 () = swap_runner()
+#+END_EXAMPLE
+
+* Swap From ATS
+#+BEGIN_EXAMPLE
+  %{^
+  #include ...
+
+  void swap(void *i, void *j, size_t size) {
+    ...
+  }
+
+  void swap_runner() {
+    int a = 1, b = 2;
+    swap(&a, &b, sizeof(int));
+    printf("After . a: %d, b: %d\n", a, b);
+  }
+  %}
+
+  extern fun swap_runner():void = "ext#swap_runner"
+
+  implement main0 () = swap_runner()
 #+END_EXAMPLE
 
 - Results
@@ -63,70 +133,138 @@ implement main0 () = swap_runner()
 After a: 2, b: 1
 #+END_EXAMPLE
 
-* Swap
+* Swap In ATS
 #+BEGIN_EXAMPLE
   staload UN = "prelude/SATS/unsafe.sats"
-
-  %{^
-  void swap(int *i, int *j) {..}
-  %}
-
-  extern fun malloc (s: size_t): ptr = "mac#malloc"
-  extern fun free (p: ptr):void = "mac#free"
-  extern fun swap(p1: ptr, p2: ptr): void = "mac#swap"
-
-  implement main0 () = let
-    val i = malloc(sizeof<double>) // double?!
-    val j = malloc(sizeof<int>)
-  in
-    $UN.ptr0_set<int>(i, 1); $UN.ptr0_set<int>(j, 2);
-    swap(i,j);
-    print($UN.ptr0_get<int> (i)); print("\n");
-    print($UN.ptr0_get<int> (j)); print("\n");
-    free(i);
-                                   // free(j)?!
-  end
 #+END_EXAMPLE
-- Running `swap` from ATS
-* Swap
+
+* Swap In ATS
 #+BEGIN_EXAMPLE
   staload UN = "prelude/SATS/unsafe.sats"
+  extern fun malloc (s: size_t): ptr = "mac#malloc"
+#+END_EXAMPLE
 
-  %{^
-  void swap(int *i, int *j) {..}
-  %}
-
+* Swap In ATS
+#+BEGIN_EXAMPLE
+  staload UN = "prelude/SATS/unsafe.sats"
   extern fun malloc (s: size_t): ptr = "mac#malloc"
   extern fun free (p: ptr):void = "mac#free"
-  extern fun swap(p1: ptr, p2: ptr): void = "mac#swap"
+#+END_EXAMPLE
 
-  implement main0 () = let
-    val i = malloc(sizeof<double>) // double?!
-    val j = malloc(sizeof<int>)
+* Swap In ATS
+#+BEGIN_EXAMPLE
+  staload UN = "prelude/SATS/unsafe.sats"
+  extern fun malloc (s: size_t): ptr = "mac#malloc"
+  extern fun free (p: ptr):void = "mac#free"
+  extern fun memcpy(into: ptr, from: ptr, s: size_t): void = "mac#memcpy"
+#+END_EXAMPLE
+
+* Swap In ATS
+#+BEGIN_EXAMPLE
+  staload UN = "prelude/SATS/unsafe.sats"
+  extern fun malloc (s: size_t): ptr = "mac#malloc"
+  extern fun free (p: ptr):void = "mac#free"
+  extern fun memcpy(into: ptr, from: ptr, s: size_t): void = "mac#memcpy"
+  fun swap(i: ptr, j: ptr, s: size_t): void = ...
+#+END_EXAMPLE
+
+* Swap In ATS
+#+BEGIN_EXAMPLE
+  staload UN = "prelude/SATS/unsafe.sats"
+  extern fun malloc (s: size_t): ptr = "mac#malloc"
+  extern fun free (p: ptr):void = "mac#free"
+  extern fun memcpy(into: ptr, from: ptr, s: size_t): void = "mac#memcpy"
+  fun swap(i: ptr, j: ptr, s: size_t): void = let
+    val tmp = malloc(s)
   in
-    $UN.ptr0_set<int>(i, 1); $UN.ptr0_set<int>(j, 2);
-    swap(i,j);
-    print($UN.ptr0_get<int> (i)); print("\n");
-    print($UN.ptr0_get<int> (j)); print("\n");
-    free(i);
-                                   // free(j)?!
+#+END_EXAMPLE
+
+* Swap In ATS
+#+BEGIN_EXAMPLE
+  staload UN = "prelude/SATS/unsafe.sats"
+  extern fun malloc (s: size_t): ptr = "mac#malloc"
+  extern fun free (p: ptr):void = "mac#free"
+  extern fun memcpy(into: ptr, from: ptr, s: size_t): void = "mac#memcpy"
+  fun swap(i: ptr, j: ptr, s: size_t): void = let
+    val tmp = malloc(s)
+  in
+     memcpy(tmp,j,s); memcpy(j,i,s); memcpy(i,tmp,s);
+     free(tmp);
   end
 #+END_EXAMPLE
-- Results
+
+* Swap In ATS
 #+BEGIN_EXAMPLE
-2
-1
+  implement main0 () = let
+    val i = malloc(sizeof<double>) // !!!!!!
+    val j = malloc(sizeof<int>)
+  in
+   ...
 #+END_EXAMPLE
 
-- Can mimic C, including bugs!
+* Swap In ATS
+#+BEGIN_EXAMPLE
+  implement main0 () = let
+    val i = malloc(sizeof<double>) // !!!!!
+    val j = malloc(sizeof<int>)
+  in
+    $UN.ptr0_set<int>(i, 1);
+    $UN.ptr0_set<int>(j, 2);
+    ...
+#+END_EXAMPLE
+
+* Swap In ATS
+#+BEGIN_EXAMPLE
+  implement main0 () = let
+    val i = malloc(sizeof<double>) // !!!!!
+    val j = malloc(sizeof<int>)
+  in
+    $UN.ptr0_set<int>(i, 1);
+    $UN.ptr0_set<int>(j, 2);
+    swap(i,j,int);
+    ...
+#+END_EXAMPLE
+
+* Swap In ATS
+#+BEGIN_EXAMPLE
+  implement main0 () = let
+    val i = malloc(sizeof<double>) // !!!!!
+    val j = malloc(sizeof<int>)
+  in
+    $UN.ptr0_set<int>(i, 1);
+    $UN.ptr0_set<int>(j, 2);
+    swap(i,j,int);
+    print($UN.ptr0_get<int>(i)); print("\n");
+    print($UN.ptr0_get<int>(j)); print("\n");
+    ...
+#+END_EXAMPLE
+
+* Swap In ATS
+#+BEGIN_EXAMPLE
+  implement main0 () = let
+    val i = malloc(sizeof<double>) // !!!!!
+    val j = malloc(sizeof<int>)
+  in
+    $UN.ptr0_set<int>(i, 1);
+    $UN.ptr0_set<int>(j, 2);
+    swap(i,j,int);
+    print($UN.ptr0_get<int>(i)); print("\n");
+    print($UN.ptr0_get<int>(j)); print("\n");
+    free(i)    // free(j) ?!!!!
+#+END_EXAMPLE
+
+* Swap In ATS
+- Can totally mimic C
+- Including the bugs
+- Gradual migration
 
 * A safer malloc/free
 #+BEGIN_EXAMPLE
   extern fun malloc    extern fun malloc
                          {a:t@ype}
     (s: size_t)     =>   (s:sizeof_t a)
-      :ptr =               :[l:addr | l > null]
-                            (a? @ l | ptr l) =
+                           :[l:addr | l > null]
+      :ptr =                (a? @ l | ptr l) =
     "mac#malloc"         "mac#malloc"
 #+END_EXAMPLE
 
@@ -139,65 +277,90 @@ After a: 2, b: 1
     "mac#free"         "mac#free"
 #+END_EXAMPLE
 
-* Setting/getting a pointer
+* A safer malloc
+- Example usage
 #+BEGIN_EXAMPLE
-
-#+END_EXAMPLE
-* Proof Functions
-#+BEGIN_EXAMPLE
-%{^
-  void my_ptr_set(int *i, int j) {
-    *i = j;
-  }
-%}
-
-extern fun my_ptr_set
- {a:t@ype}
- {l:addr | l > null}
- (pf: a? @ l | p: ptr l, x: a)
-   :(a @ l | void) = "mac#my_ptr_set"
-
-implement main0 () = let
-  val (pf | i) = malloc(sizeof<int>)
-  val (pf1 | _) = my_ptr_set(pf | i, 10)
-  val j = ptr_get(pf1 | i)
-in
-  print_int(j);
-  // free (pf | i) fails to compile
-  free(pf1 | i);
-end
-#+END_EXAMPLE
-
-* Safe pointer
-
-#+BEGIN_EXAMPLE
-extern fun malloc{a:t@ype}(s:sizeof_t a):
-                 [l:addr | l > null](a? @ l | ptr l) = "mac#malloc"
-extern fun free{a:t@ype}{l : addr| l > null}(a @ l | ptr l):
-                 void = "mac#free"
 implement main0 () = let
   val (pf | a) = malloc (sizeof<int>)
-  val _ = ptr_set(pf | a, 10)
-  val x = ptr_get(pf | a)
-  val y = x + 1
 in
   free(pf | a);
 end
 #+END_EXAMPLE
 
-* Safe pointer
-
+* A safer malloc
+- `a` is not freed.
 #+BEGIN_EXAMPLE
-           malloc{a:t@ype}(s:sizeof_t a):
-                 [l:addr | l > null](a? @ l |      ) = "          "
-           free{a:t@ype}{l : addr| l > null}(a @ l |      ):
-                 void = "        "
-          main0    = let
-      (pf |  ) = malloc (sizeof<int>)
-        = ptr_set(pf |      )
-        = ptr_get(pf |  )
-        =
+implement main0 () = let
+  val (pf | a) = malloc (sizeof<int>)
 in
-  free(pf |  );
+  ()       // type error!
+end
+#+END_EXAMPLE
+
+* A safer malloc
+- `free` not given proof
+#+BEGIN_EXAMPLE
+implement main0 () = let
+  val (pf | a) = malloc (sizeof<int>)
+in
+  free(a); // type error!
+end
+#+END_EXAMPLE
+
+* A safer swap
+#+BEGIN_EXAMPLE
+  fun swap            extern fun swap
+                        {a:t@ype}
+                        {l1: addr | l1 > null}
+                  =>    {l2: addr | l2 > null}
+                        (a @ l1 , a @ l2 |
+      (i: ptr,             i:ptr,
+       j: ptr,             j:ptr,
+       s: size_t):         s:size_t):
+      void = ...          (a @ l1, a @ l2 | void) = ...
+#+END_EXAMPLE
+
+* A safer swap
+#+BEGIN_EXAMPLE
+implement main0 () = let
+  val (pfi | i) = malloc (sizeof<int>)
+  val (pfj | j) = malloc (sizeof<int>)
+  ...
+#+END_EXAMPLE
+
+* A safer swap
+#+BEGIN_EXAMPLE
+implement main0 () = let
+  val (pfi | i) = malloc (sizeof<int>)
+  val (pfj | j) = malloc (sizeof<int>)
+  val _ = ptr_set(pfi | i, 1)
+  val _ = ptr_set(pfj | j, 2)
+  ...
+#+END_EXAMPLE
+
+* A safer swap
+#+BEGIN_EXAMPLE
+implement main0 () = let
+  val (pfi | i) = malloc (sizeof<int>)
+  val (pfj | j) = malloc (sizeof<int>)
+  val _ = ptr_set(pfi | i, 1)
+  val _ = ptr_set(pfj | j, 2)
+  val (pfi1,pfj1| ()) = swap(pfi, pfj | i, j, sizeof<int>)
+in
+  ...
+#+END_EXAMPLE
+
+* A safer swap
+#+BEGIN_EXAMPLE
+implement main0 () = let
+  val (pfi | i) = malloc (sizeof<int>)
+  val (pfj | j) = malloc (sizeof<int>)
+  val _ = ptr_set(pfi | i, 1)
+  val _ = ptr_set(pfj | j, 2)
+  val (pfi1,pfj1| ()) = swap(pfi, pfj | i, j, sizeof<int>)
+in
+  ...
+  free(pfi1 | i);
+  free(pfj1 | j);
 end
 #+END_EXAMPLE
