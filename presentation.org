@@ -2,6 +2,29 @@
 #+Author: Aditya Siram
 #+EPRESENT_FRAME_LEVEL: 1
 
+* ATS
+- Is an ML (not standard)
+  - ADTS, pattern-matching, modules etc.
+  - Same power of abstraction
+- Dependently typed
+- Theorem prover
+  - Inductive, only.
+- Optional GC
+
+* ATS
+- Linear logic to manage resources
+  - file handles, sockets, anything
+- But especially memory
+- Works without a runtime.
+  - Verified embedded/systems programming
+- All the advantages of C/C++
+  - Same ability to reason abt. perf/memory usage
+  - Type checked pointer arithmetic
+- Very easy interop
+  - C -> ATS is trivial
+  - ATS -> C is easier than C++ -> C!
+  - Sneak it in!
+
 * Hello World
 - Minimal
 #+BEGIN_EXAMPLE
@@ -277,7 +300,7 @@ After a: 2, b: 1
     "mac#free"         "mac#free"
 #+END_EXAMPLE
 
-* A safer malloc
+* A safe malloc/free
 - Example usage
 #+BEGIN_EXAMPLE
 implement main0 () = let
@@ -287,7 +310,7 @@ in
 end
 #+END_EXAMPLE
 
-* A safer malloc
+* A safe malloc/free
 - `a` is not freed.
 #+BEGIN_EXAMPLE
 implement main0 () = let
@@ -297,8 +320,8 @@ in
 end
 #+END_EXAMPLE
 
-* A safer malloc
-- `free` not given proof
+* A safe malloc/free
+- `free` not given proof that `a` is initialized
 #+BEGIN_EXAMPLE
 implement main0 () = let
   val (pf | a) = malloc (sizeof<int>)
