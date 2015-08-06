@@ -53,7 +53,9 @@ implement main0 () = print(greet())
 #+BEGIN_SRC
 void swap(void *i, void *j, size_t size) {
   void* tmp = malloc(size);
-  memcpy(tmp, j, size); memcpy(j, i, size); memcpy(i, tmp, size);
+  memcpy(tmp, j, size);
+  memcpy(j, i, size);
+  memcpy(i, tmp, size);
   free(tmp);
 }
 
@@ -70,7 +72,9 @@ void main() {
   %{^
     void swap(void *i, void *j, size_t size) {
       void* tmp = malloc(size);
-      memcpy(tmp, j, size); memcpy(j, i, size); memcpy(i, tmp, size);
+      memcpy(tmp, j, size);
+      memcpy(j, i, size);
+      memcpy(i, tmp, size);
       free(tmp);
     }
     ...
@@ -468,3 +472,213 @@ in
   free(pfj1 | j);
 end
 #+END_EXAMPLE
+* Printing a List
+- The runner
+#+BEGIN_EXAMPLE
+implement main0() = {
+  val a = list_make_intrange(0,10)
+  val () = print_list (a)
+  val () = list_vt_free (a)
+}
+#+END_EXAMPLE
+- The [0 .. 9] is allocated on the heap
+* First attempt
+- Pattern match on a non-empty list
+#+BEGIN_EXAMPLE
+fun print_list (l: List_vt (int)): void =
+  case+ l of
+  | list_vt_cons (x, xs) => (
+#+END_EXAMPLE
+* First attempt
+- Print and recurse
+#+BEGIN_EXAMPLE
+fun print_list (l: List_vt (int)): void =
+  case+ l of
+  | list_vt_cons (x, xs) => (
+     fprint(stdout_ref, x);
+     print_list(xs)
+    )
+#+END_EXAMPLE
+
+* First attempt
+- If nil, do nothing
+#+BEGIN_EXAMPLE
+fun print_list (l: List_vt (int)): void =
+  case+ l of
+  | list_vt_cons (x, xs) => (
+     fprint(stdout_ref, x);
+     print_list(xs)
+    )
+  | list_vt_nil () => ()
+#+END_EXAMPLE
+
+* First attempt
+ - Compiler error!
+ - Remember the list is a set of resources
+ - Pattern matching dereferences the head
+   - consumes the resource!
+ - Freeing fails!
+    #+BEGIN_EXAMPLE
+    val () = list_vt_free(a)
+    #+END_EXAMPLE
+
+* Final Attempt
+- A very /special/ function, =fold@=
+- Pattern-matching unfolds the list
+- =fold@= unconsumes the proof.
+
+* Final Attempt
+- This works.
+#+BEGIN_EXAMPLE
+fun print_list ...
+  case+ l of
+    | @list_vt_cons (x, xs) => (
+          .. // print and recurse
+          fold@ l
+        )
+    | list_vt_nil () => ()
+#+END_EXAMPLE
+
+* Filter
+- Pattern match nil, note =fold@=
+#+BEGIN_EXAMPLE
+  case+ l of
+  | @list_vt_nil () => (fold@ l; list_vt_nil)
+#+END_EXAMPLE
+- Non-tail recursive, just the body for now
+-
+* Filter
+- Pattern match the =cons= case, note the =f(x)= guard
+#+BEGIN_EXAMPLE
+  case+ l of
+  | @list_vt_nil () => (fold@ l; list_vt_nil)
+  | @list_vt_cons (x, xs) when f (x) =>
+#+END_EXAMPLE
+
+* Filter
+- Recurse on the rest of the list
+#+BEGIN_EXAMPLE
+  case+ l of
+  | @list_vt_nil () => (fold@ l; list_vt_nil)
+  | @list_vt_cons (x, xs) when f (x) => let
+         val rest = list_vt_filter(xs,f)
+#+END_EXAMPLE
+
+* Filter
+- For some reason this lemma is needed, ¯\_(ツ)_/¯
+#+BEGIN_EXAMPLE
+  case+ l of
+  | @list_vt_nil () => (fold@ l; list_vt_nil)
+  | @list_vt_cons (x, xs) when f (x) => let
+         val rest = list_vt_filter(xs,f)
+         prval () = lemma_list_vt_param (rest)
+#+END_EXAMPLE
+
+* Filter
+- Recreate the list
+#+BEGIN_EXAMPLE
+  case+ l of
+  | @list_vt_nil () => (fold@ l; list_vt_nil)
+  | @list_vt_cons (x, xs) when f (x) => let
+         val rest = list_vt_filter(xs,f)
+         prval () = lemma_list_vt_param (rest)
+         val r = list_vt_cons (x, rest)
+       in
+         fold@ l;
+         r
+       end
+#+END_EXAMPLE
+
+* Filter
+- Re-inject the proof that =l= is untouched, return =r=
+#+BEGIN_EXAMPLE
+  case+ l of
+  | @list_vt_nil () => (fold@ l; list_vt_nil)
+  | @list_vt_cons (x, xs) when f (x) => let
+         val rest = list_vt_filter(xs,f)
+         prval () = lemma_list_vt_param (rest)
+         val r = list_vt_cons (x, rest)
+       in
+         fold@ l; r
+       end
+#+END_EXAMPLE
+
+* Filter
+- Now type signature
+#+BEGIN_EXAMPLE
+fun {a:t@ype}                <--
+    list_vt_filter
+     {n: int}
+     (l: !list_vt (a, n),
+      f: a -> bool)
+        :[k: int | k <= n]
+         list_vt (a , k) = ...
+#+END_EXAMPLE
+- =a= is any unboxed type
+  - like =malloc=, =free=, etc
+
+* Filter
+- Now type signature
+#+BEGIN_EXAMPLE
+fun {a:t@ype}
+    list_vt_filter
+     {n: int}                 <--
+     (l: !list_vt (a, n),
+      f: a -> bool)
+        :[k: int | k <= n]
+         list_vt (a , k) = ...
+#+END_EXAMPLE
+- any integer
+
+* Filter
+- Now type signature
+#+BEGIN_EXAMPLE
+fun {a:t@ype}
+    list_vt_filter
+     {n: int}
+     (l: !list_vt (a, n),     <--
+      f: a -> bool)
+        :[k: int | k <= n]
+         list_vt (a , k) = ...
+#+END_EXAMPLE
+- =list_vt= is a viewtype
+  - Something of type =a=
+  - paired with pointer (unseen)
+  - Of length =n=
+* Filter
+- Now type signature
+#+BEGIN_EXAMPLE
+fun {a:t@ype}
+    list_vt_filter
+     {n: int}
+     (l: !list_vt (a, n),
+      f: a -> bool)          <--
+        :[k: int | k <= n]
+         list_vt (a , k) = ...
+#+END_EXAMPLE
+- The predicate function
+
+* Filter
+- Now type signature
+#+BEGIN_EXAMPLE
+fun {a:t@ype}
+    list_vt_filter
+     {n: int}
+     (l: !list_vt (a, n),
+      f: a -> bool)
+        :[k: int | k <= n]  <--
+         list_vt (a , k) =  <--
+#+END_EXAMPLE
+- Returns a list
+  - *statically* proven to be <= n!
+
+* Filter
+- The  =list_vt_cons= pattern-match:
+  - =list_vt_cons(x, xs)=
+  - subtracts n by one on every pattern-match
+- The solver can figure out the rest!
+* Resources
+- Chris Double's Blog: http://bluishcoder.co.nz/tags/ats/index.html
+- The ATS Book
+  - http://ats-lang.sourceforge.net/DOCUMENT/INT2PROGINATS/HTML/book1.html
+- ATS Google Group

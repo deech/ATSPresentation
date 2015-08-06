@@ -28,6 +28,10 @@ proof_functions: proof_functions.dats ; \
   $(PATSCC) $(PATSCCFLAGS) -o $@ $< || echo $@ ": ERROR!!!"
 array: array.dats ; \
   $(PATSCC) -DATS_MEMALLOC_LIBC $(PATSCCFLAGS) -o $@ $< || echo $@ ": ERROR!!!"
+print_list: print_list.dats ; \
+  $(PATSCC) -DATS_MEMALLOC_LIBC $(PATSCCFLAGS) -o $@ $< || echo $@ ": ERROR!!!"
+filter_list: filter_list.dats ; \
+  $(PATSCC) -DATS_MEMALLOC_LIBC $(PATSCCFLAGS) -o $@ $< || echo $@ ": ERROR!!!"
 cleanall:: ; $(RMF) minimal
 
 ######
@@ -54,6 +58,8 @@ clean:: ; $(RMF) swap_runner
 clean:: ; $(RMF) swap_from_ats
 clean:: ; $(RMF) proof_functions
 clean:: ; $(RMF) array
+clean:: ; $(RMF) print_list
+clean:: ; $(RMF) filter_list
 clean:: ; $(RMF) minimal
 
 cleanall:: clean
