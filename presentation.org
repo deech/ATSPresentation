@@ -35,6 +35,7 @@ implement main0 () = print(greet())
 * Performance
 - Performs as well as C/C++
 [[file:ats-screenshot.png]]
+* Performance
 - Run anywhere C runs ...
 - No boxing == zero overhead when setting/getting
 - Unfreed memory == type error
@@ -59,6 +60,7 @@ void main() {
 #+END_SRC
 
 * Swap From ATS
+- Copy-paste in between =%{^= and =%}=
 #+BEGIN_EXAMPLE
   %{^
     void swap(void *i, void *j, size_t size) {
@@ -72,6 +74,7 @@ void main() {
 #+END_EXAMPLE
 
 * Swap From ATS
+- Convert C's =main= function to a runner
 #+BEGIN_EXAMPLE
   %{^
     void swap(void *i, void *j, size_t size) {
@@ -90,6 +93,7 @@ void main() {
 #+END_EXAMPLE
 
 * Swap From ATS
+- Add an ATS wrapper. No runtime overhead.
 #+BEGIN_EXAMPLE
   %{^
     void swap(void *i, void *j, size_t size) {
@@ -110,6 +114,7 @@ void main() {
 #+END_EXAMPLE
 
 * Swap From ATS
+- Call it.
 #+BEGIN_EXAMPLE
   %{^
     void swap(void *i, void *j, size_t size) {
@@ -157,17 +162,20 @@ After a: 2, b: 1
 #+END_EXAMPLE
 
 * Swap In ATS
+- Import unsafe pointer ops.
 #+BEGIN_EXAMPLE
   staload UN = "prelude/SATS/unsafe.sats"
 #+END_EXAMPLE
 
 * Swap In ATS
+- Wrap C's =malloc=
 #+BEGIN_EXAMPLE
   staload UN = "prelude/SATS/unsafe.sats"
   extern fun malloc (s: size_t): ptr = "mac#malloc"
 #+END_EXAMPLE
 
 * Swap In ATS
+- Wrap C's =free=
 #+BEGIN_EXAMPLE
   staload UN = "prelude/SATS/unsafe.sats"
   extern fun malloc (s: size_t): ptr = "mac#malloc"
@@ -175,6 +183,7 @@ After a: 2, b: 1
 #+END_EXAMPLE
 
 * Swap In ATS
+- Wrap C's =memcpy=
 #+BEGIN_EXAMPLE
   staload UN = "prelude/SATS/unsafe.sats"
   extern fun malloc (s: size_t): ptr = "mac#malloc"
@@ -183,6 +192,7 @@ After a: 2, b: 1
 #+END_EXAMPLE
 
 * Swap In ATS
+- Swap in ATS
 #+BEGIN_EXAMPLE
   staload UN = "prelude/SATS/unsafe.sats"
   extern fun malloc (s: size_t): ptr = "mac#malloc"
@@ -192,6 +202,7 @@ After a: 2, b: 1
 #+END_EXAMPLE
 
 * Swap In ATS
+- Allocate =tmp= space.
 #+BEGIN_EXAMPLE
   staload UN = "prelude/SATS/unsafe.sats"
   extern fun malloc (s: size_t): ptr = "mac#malloc"
@@ -203,6 +214,7 @@ After a: 2, b: 1
 #+END_EXAMPLE
 
 * Swap In ATS
+- Exactly the same as C version.
 #+BEGIN_EXAMPLE
   staload UN = "prelude/SATS/unsafe.sats"
   extern fun malloc (s: size_t): ptr = "mac#malloc"
@@ -217,6 +229,7 @@ After a: 2, b: 1
 #+END_EXAMPLE
 
 * Swap In ATS
+- Allocate
 #+BEGIN_EXAMPLE
   implement main0 () = let
     val i = malloc(sizeof<double>) // !!!!!!
@@ -226,6 +239,7 @@ After a: 2, b: 1
 #+END_EXAMPLE
 
 * Swap In ATS
+- Initialize
 #+BEGIN_EXAMPLE
   implement main0 () = let
     val i = malloc(sizeof<double>) // !!!!!
@@ -237,6 +251,7 @@ After a: 2, b: 1
 #+END_EXAMPLE
 
 * Swap In ATS
+- Swap
 #+BEGIN_EXAMPLE
   implement main0 () = let
     val i = malloc(sizeof<double>) // !!!!!
@@ -249,6 +264,7 @@ After a: 2, b: 1
 #+END_EXAMPLE
 
 * Swap In ATS
+- Print
 #+BEGIN_EXAMPLE
   implement main0 () = let
     val i = malloc(sizeof<double>) // !!!!!
@@ -263,6 +279,7 @@ After a: 2, b: 1
 #+END_EXAMPLE
 
 * Swap In ATS
+- Free
 #+BEGIN_EXAMPLE
   implement main0 () = let
     val i = malloc(sizeof<double>) // !!!!!
@@ -284,23 +301,75 @@ After a: 2, b: 1
 * A safer malloc/free
 #+BEGIN_EXAMPLE
   extern fun malloc    extern fun malloc
-                         {a:t@ype}
+                         {a:t@ype}              <--
     (s: size_t)     =>   (s:sizeof_t a)
                            :[l:addr | l > null]
       :ptr =                (a? @ l | ptr l) =
     "mac#malloc"         "mac#malloc"
 #+END_EXAMPLE
+- For all types =a=, of *sort* =t@ype= (unboxed type)
 
+* A safer malloc/free
+#+BEGIN_EXAMPLE
+  extern fun malloc    extern fun malloc
+                         {a:t@ype}
+    (s: size_t)     =>   (s:sizeof_t a)         <--
+                           :[l:addr | l > null]
+      :ptr =                (a? @ l | ptr l) =
+    "mac#malloc"         "mac#malloc"
+#+END_EXAMPLE
+- Given =sizeof_t= of *sort* =a=
+
+* A safer malloc/free
+#+BEGIN_EXAMPLE
+  extern fun malloc    extern fun malloc
+                         {a:t@ype}
+    (s: size_t)     =>   (s:sizeof_t a)
+                           :[l:addr | l > null] <--
+      :ptr =                (a? @ l | ptr l) =  <--
+    "mac#malloc"         "mac#malloc"
+#+END_EXAMPLE
+- Returns
+  - proof that =a= (uninitialized) is at =l=
+  - pointer to some non-null address =l=
+
+* A safer malloc/free
+#+BEGIN_EXAMPLE
+  extern fun free    extern fun free
+                       {a:t@ype}            <--
+                  =>   {l : addr| l > null} <--
+    (p: ptr)           (a @ l | ptr l)
+      :void =            :void =
+    "mac#free"         "mac#free"
+#+END_EXAMPLE
+- For all types =a=, of *sort* =t@ype= (unboxed)
+- For all non-null addresses, =l=
+
+* A safer malloc/free
+#+BEGIN_EXAMPLE
+  extern fun free    extern fun free
+                       {a:t@ype}
+                  =>   {l : addr| l > null}
+    (p: ptr)           (a @ l | ptr l)      <--
+      :void =            :void =
+    "mac#free"         "mac#free"
+#+END_EXAMPLE
+- Given
+  - proof that =a= (initialized) is at some non-null =l=
+  - pointer to =l=
+
+* A safer malloc/free
 #+BEGIN_EXAMPLE
   extern fun free    extern fun free
                        {a:t@ype}
                   =>   {l : addr| l > null}
     (p: ptr)           (a @ l | ptr l)
-      :void =            :void =
+      :void =            :void =            <--
     "mac#free"         "mac#free"
 #+END_EXAMPLE
+- /Consumes/ proof, returns nothing
 
-* A safe malloc/free
+* A safer malloc/free
 - Example usage
 #+BEGIN_EXAMPLE
 implement main0 () = let
@@ -309,9 +378,11 @@ in
   free(pf | a);
 end
 #+END_EXAMPLE
+- Allocate, retrive proof via pattern-matching
+- Free, using that proof
 
-* A safe malloc/free
-- `a` is not freed.
+* A safer malloc/free
+- `a` is not freed. Unconsumed proof in scope.
 #+BEGIN_EXAMPLE
 implement main0 () = let
   val (pf | a) = malloc (sizeof<int>)
@@ -320,7 +391,7 @@ in
 end
 #+END_EXAMPLE
 
-* A safe malloc/free
+* A safer malloc/free
 - `free` not given proof that `a` is initialized
 #+BEGIN_EXAMPLE
 implement main0 () = let
@@ -337,13 +408,15 @@ end
                         {l1: addr | l1 > null}
                   =>    {l2: addr | l2 > null}
                         (a @ l1 , a @ l2 |
-      (i: ptr,             i:ptr,
-       j: ptr,             j:ptr,
-       s: size_t):         s:size_t):
+      (i: ptr,             i:ptr l1,
+       j: ptr,             j:ptr l2,
+       s: size_t):         s:sizeof_t a):
       void = ...          (a @ l1, a @ l2 | void) = ...
 #+END_EXAMPLE
+- Like =free=, expect with 2 proofs & pointers
 
 * A safer swap
+- Allocate, retrieve proofs
 #+BEGIN_EXAMPLE
 implement main0 () = let
   val (pfi | i) = malloc (sizeof<int>)
@@ -352,6 +425,7 @@ implement main0 () = let
 #+END_EXAMPLE
 
 * A safer swap
+- Initialize, passing proofs to setter.
 #+BEGIN_EXAMPLE
 implement main0 () = let
   val (pfi | i) = malloc (sizeof<int>)
@@ -362,6 +436,7 @@ implement main0 () = let
 #+END_EXAMPLE
 
 * A safer swap
+- Swap, returns *new* proofs.
 #+BEGIN_EXAMPLE
 implement main0 () = let
   val (pfi | i) = malloc (sizeof<int>)
@@ -374,6 +449,7 @@ in
 #+END_EXAMPLE
 
 * A safer swap
+- Free, using new proofs.
 #+BEGIN_EXAMPLE
 implement main0 () = let
   val (pfi | i) = malloc (sizeof<int>)
