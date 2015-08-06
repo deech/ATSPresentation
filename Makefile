@@ -17,15 +17,17 @@ cleanall::
 minimal: minimal.dats ; \
   $(PATSCC) -DATS_MEMALLOC_GCBDW $(PATSCCFLAGS) -o $@ $< -lgc || echo $@ ": ERROR!!!"
 swap_runner: swap_runner.dats ; \
-  $(PATSCC) -DATS_MEMALLOC_GCBDW $(PATSCCFLAGS) -o $@ $< || echo $@ ": ERROR!!!"
+  $(PATSCC) $(PATSCCFLAGS) -o $@ $< || echo $@ ": ERROR!!!"
 swap_from_ats: swap_from_ats.dats ; \
-  $(PATSCC) -DATS_MEMALLOC_GCBDW $(PATSCCFLAGS) -o $@ $< || echo $@ ": ERROR!!!"
+  $(PATSCC) $(PATSCCFLAGS) -o $@ $< || echo $@ ": ERROR!!!"
 safe_malloc: safe_malloc.dats ; \
-  $(PATSCC) -DATS_MEMALLOC_GCBDW $(PATSCCFLAGS) -o $@ $< || echo $@ ": ERROR!!!"
+  $(PATSCC) $(PATSCCFLAGS) -o $@ $< || echo $@ ": ERROR!!!"
 safe_swap: safe_swap.dats ; \
-  $(PATSCC) -DATS_MESWAP_GCBDW $(PATSCCFLAGS) -o $@ $< || echo $@ ": ERROR!!!"
+  $(PATSCC) $(PATSCCFLAGS) -o $@ $< || echo $@ ": ERROR!!!"
 proof_functions: proof_functions.dats ; \
-  $(PATSCC) -DATS_MEMALLOC_GCBDW $(PATSCCFLAGS) -o $@ $< || echo $@ ": ERROR!!!"
+  $(PATSCC) $(PATSCCFLAGS) -o $@ $< || echo $@ ": ERROR!!!"
+array: array.dats ; \
+  $(PATSCC) -DATS_MEMALLOC_LIBC $(PATSCCFLAGS) -o $@ $< || echo $@ ": ERROR!!!"
 cleanall:: ; $(RMF) minimal
 
 ######
@@ -51,6 +53,7 @@ clean:: ; $(RMF) safe_swap
 clean:: ; $(RMF) swap_runner
 clean:: ; $(RMF) swap_from_ats
 clean:: ; $(RMF) proof_functions
+clean:: ; $(RMF) array
 clean:: ; $(RMF) minimal
 
 cleanall:: clean

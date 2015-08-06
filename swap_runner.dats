@@ -21,6 +21,6 @@ void swap_runner() {
 }
 %}
 
-extern fun swap_runner():void = "ext#swap_runner"
+extern fun swap_runner():void = "mac#swap_runner"
 
 implement main0 () = swap_runner()

@@ -13,28 +13,25 @@
 
 * ATS
 - Linear logic to manage resources
+  - Prove it exists, consume proof, repeat
   - file handles, sockets, anything
 - But especially memory
-- Works without a runtime.
+  - Prove pointer is initialized, dereference, repeat
+  - Type checked pointer arithmetic
+
+* ATS
+- Designed to work without a runtime.
   - Verified embedded/systems programming
 - All the advantages of C/C++
-  - Same ability to reason abt. perf/memory usage
-  - Type checked pointer arithmetic
 - Very easy interop
   - C -> ATS is trivial
   - ATS -> C is easier than C++ -> C!
   - Sneak it in!
 
-* Hello World
-- Minimal
-#+BEGIN_EXAMPLE
-val greet = lam () => "hello world\n"
-implement main0 () = print(greet())
-#+END_EXAMPLE
-
 * Performance
 - Performs as well as C/C++
 [[file:ats-screenshot.png]]
+
 * Performance
 - Run anywhere C runs ...
 - No boxing == zero overhead when setting/getting
@@ -42,6 +39,14 @@ implement main0 () = print(greet())
 - Unauthorized reads == type error
 - Unauthorized writes == type error
 - Type error!
+
+
+* Hello World
+- Minimal
+#+BEGIN_EXAMPLE
+val greet = lam () => "hello world\n"
+implement main0 () = print(greet())
+#+END_EXAMPLE
 
 * Swap
 - A standard swap function
@@ -109,7 +114,7 @@ void main() {
     }
   %}
 
-  extern fun swap_runner():void = "ext#swap_runner"
+  extern fun swap_runner():void = "mac#swap_runner"
   ...
 #+END_EXAMPLE
 
