@@ -32,6 +32,8 @@ print_list: print_list.dats ; \
   $(PATSCC) -DATS_MEMALLOC_LIBC $(PATSCCFLAGS) -o $@ $< || echo $@ ": ERROR!!!"
 filter_list: filter_list.dats ; \
   $(PATSCC) -DATS_MEMALLOC_LIBC $(PATSCCFLAGS) -o $@ $< || echo $@ ": ERROR!!!"
+presentation.html: presentation.org ; \
+  pandoc $< -t slidy -s -o $@
 cleanall:: ; $(RMF) minimal
 
 ######
